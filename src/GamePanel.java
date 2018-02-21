@@ -126,8 +126,14 @@ public class GamePanel extends JPanel{
 
 	public static boolean paused = true;
 	public static boolean stopped = false;
+	public static long timeSlept = 0;
+	public static long timeStarted = System.currentTimeMillis();
 
 	int answerClicks = 0;//number of times answers were clicked for this sample
+	
+	ContinueButton contButton = new ContinueButton();
+	
+	static BufferedImage entireScreen = null;
 
 	//trial account credentials:
 	//username: PoorPeasant
@@ -175,7 +181,7 @@ public class GamePanel extends JPanel{
 		getPriorSamples();
 
 		//make eve be the active window
-		//activate.makeActive("EVE - King Currency");
+		activate.makeActive("EVE - King Currency");
 	}
 
 	public static void initializePossibleChoices(){
@@ -258,6 +264,7 @@ public class GamePanel extends JPanel{
 	}
 	public static void sleep(int time){
 		try {
+			timeSlept+=time;
 			Thread.sleep(time);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -396,7 +403,7 @@ public class GamePanel extends JPanel{
 			sleep(randomNumber(250,270));
 			currentImage=null;
 			long startingTime = System.currentTimeMillis();
-			BufferedImage entireScreen = robot.createScreenCapture(new Rectangle(0,0,1920,1080));
+			entireScreen = robot.createScreenCapture(new Rectangle(0,0,1220,1080));
 			//saveBufferedImage(entireScreen,baseDirectory+"images"+File.separator+priorSamples.size()+".png");
 			//find the start of the image we care about
 			for(int i = 0; i<entireScreen.getWidth()-404;i++){
@@ -446,42 +453,8 @@ public class GamePanel extends JPanel{
 							}
 						}
 					}
-					//second check for darker version
 
-//					//if current is the same color as the top left corner of the image
-//					if(colorsAreSimilar(current,new Color(69,85,99))){
-//
-//						//if((current.getRed()==69&&current.getGreen()==87&&current.getBlue()==101)){
-//
-//						boolean correctSpot = true;
-//						//check if nearby pixels match the pattern
-//						for(int x = 0; x<9;x++){
-//							for(int y = 0; y<5;y++){
-//								Color color = new Color(entireScreen.getRGB(i+x, j+y),true);
-//								if(y==0){
-//									if(!colorsAreSimilar(color,new Color(69,85,99))){
-//										//if(!(color.getRed()==69&&color.getGreen()==87&&color.getBlue()==101)){							
-//										correctSpot=false;
-//									}
-//								}
-//
-//							}
-//						}
-//
-//						Color bottomCorner = new Color(entireScreen.getRGB(i+403, j+403),true);
-//						//System.out.println(bottomCorner);
-//						if(colorsAreSimilar(bottomCorner,new Color(75,92,107))){
-//
-//							//if(bottomCorner.getRed()==75&&bottomCorner.getGreen()==93&&bottomCorner.getBlue()==109){
-//							if(correctSpot){
-//
-//								//currentImage = entireScreen.getSubimage(i+2, j+2, 400, 400);
-//								imagePosition.x = i;
-//								imagePosition.y=j;
-//								//initializePossibleChoices();
-//							}
-//						}
-//					}
+
 				}
 			}
 			System.out.println("Checking for image took: "+(System.currentTimeMillis()-startingTime)+"ms");
@@ -543,9 +516,7 @@ public class GamePanel extends JPanel{
 		similarities[11] = getBlueTouchBlueSimilarity(sample);
 		similarities[12] = getBlackTouchBlackSimilarity(sample);
 		similarities[13] = getGreenShapeSizeSimilarity(sample);
-		//
-		//		confidence = temp1*temp2*temp3*temp4*temp5*temp6*temp7*temp8*temp9*temp10*temp11*temp12*temp13*temp14;
-		//		confidence = Math.pow(confidence, (1.0/14.0));
+
 		int smallest = 0;
 		for(int i =1; i<similarities.length;i++){
 			if(similarities[i]<similarities[smallest]){
@@ -554,7 +525,7 @@ public class GamePanel extends JPanel{
 		}
 		confidence = similarities[smallest];
 
-		return confidence;//(total/14.0);
+		return confidence;
 	}
 	public static double getGreenShapeSizeSimilarity(Sample sample){
 		double percentGreenVsBlue = (double)sizeOfLargestGreenShape/(double)totalBlue;
@@ -1241,8 +1212,8 @@ public class GamePanel extends JPanel{
 						System.out.println("------------------update called-----------------");
 
 						//check if we are being shown the continue button
-						Point continueButtonPos = checkForContinueButton();
-						//System.out.println("Took "+(System.currentTimeMillis()-strtTime)+"ms to get continue button position.");
+						Point continueButtonPos = contButton.checkForContinueButton();
+						System.out.println("Took "+(System.currentTimeMillis()-startingTime)+"ms to get continue button position.");
 						//if the image is not null or continue button visible
 						if(currentImage!=null||continueButtonPos.x!=-1){
 							//determine if all the guess answers that should be selected are selected
@@ -1440,38 +1411,38 @@ public class GamePanel extends JPanel{
 		
 	}
 
-	public Point checkForContinueButton(){
-		BufferedImage entireScreen = robot.createScreenCapture(new Rectangle(100,300,800,680));
-		for (int b = 0; b<4;b++){
-			Color continueStart1 = new Color(continueButton[0][b].getRGB(0, 0),true);
-			for(int i = 0; i<entireScreen.getWidth()-65;i++){
-				for(int j = 0; j<entireScreen.getHeight()-4;j++){
-					Color current = new Color(entireScreen.getRGB(i, j),true);
-					if(colorsAreSimilar(current,continueStart1)){
-						//if(current.getRed()==continueStart1.getRed()&&current.getGreen()==continueStart1.getGreen()&&current.getBlue()==continueStart1.getBlue()){
-						//System.out.println("found the start of continue button");
-						boolean found = true;
-						for(int x = 0; x<continueButton[0][b].getWidth();x++){
-							for(int y = 0; y<continueButton[0][b].getHeight();y++){
-								Color screenColor = new Color(entireScreen.getRGB(i+x, j+y));
-								Color contColor = new Color(continueButton[0][b].getRGB(x, y));
-								if(!colorsAreSimilar(screenColor, contColor)){
-									//if(!screenColor.equals(contColor)){
-									found=false;
-								}
-							}
-						}
-						if(found){
-							System.out.println("Found the continue button.");
-							return new Point(100+i,300+j);
-						}
-					}
-				}
-			}
-		}
-
-		return new Point(-1,-1);
-	}
+//	public Point checkForContinueButton(){
+//		BufferedImage entireScreen = robot.createScreenCapture(new Rectangle(100,300,800,680));
+//		for (int b = 0; b<4;b++){
+//			Color continueStart1 = new Color(continueButton[0][b].getRGB(0, 0),true);
+//			for(int i = 0; i<entireScreen.getWidth()-65;i++){
+//				for(int j = 0; j<entireScreen.getHeight()-4;j++){
+//					Color current = new Color(entireScreen.getRGB(i, j),true);
+//					if(colorsAreSimilar(current,continueStart1)){
+//						//if(current.getRed()==continueStart1.getRed()&&current.getGreen()==continueStart1.getGreen()&&current.getBlue()==continueStart1.getBlue()){
+//						//System.out.println("found the start of continue button");
+//						boolean found = true;
+//						for(int x = 0; x<continueButton[0][b].getWidth();x++){
+//							for(int y = 0; y<continueButton[0][b].getHeight();y++){
+//								Color screenColor = new Color(entireScreen.getRGB(i+x, j+y));
+//								Color contColor = new Color(continueButton[0][b].getRGB(x, y));
+//								if(!colorsAreSimilar(screenColor, contColor)){
+//									//if(!screenColor.equals(contColor)){
+//									found=false;
+//								}
+//							}
+//						}
+//						if(found){
+//							System.out.println("Found the continue button.");
+//							return new Point(100+i,300+j);
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		return new Point(-1,-1);
+//	}
 	public static boolean checkIfImageFinishedLoading(){
 
 		for(int i = 0;i<currentImage.getWidth()-loadingScreen.getWidth();i++){
@@ -1497,7 +1468,9 @@ public class GamePanel extends JPanel{
 		return true;
 	}
 	public void Draw(Graphics g){
+		
 		update();
+		
 		Font font = new Font("Iwona Heavy",Font.BOLD,14);
 		g.setFont(font);
 		FontMetrics m = g.getFontMetrics(font);
@@ -1560,6 +1533,8 @@ public class GamePanel extends JPanel{
 			g.drawString(""+amountOfGreenTouchingGreen,660,245);
 			g.drawString(""+amountOfBlueTouchingBlue,660,265);
 			g.drawString(""+amountOfBlackTouchingBlack,660,285);
+			
+			
 
 			if(currentGuess!=null){
 				//g.drawString("Was this guess correct?", 200-(m.stringWidth("Was this guess correct?")/2), 425);
@@ -1644,5 +1619,8 @@ public class GamePanel extends JPanel{
 		//		for(int i = 0;i<possibleChoices.size();i++){
 		//			possibleChoices.get(i).Draw(g);
 		//		}
+		long percentTimeSlept = (long)((double)((double)timeSlept/(double)(System.currentTimeMillis()-timeStarted)*100.0));
+		g.drawString("Percent of running time wasted waiting: "+percentTimeSlept+"%",10,35);
+		
 	}
 }

@@ -2,5 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="F:/workspace/ProjectDiscoveryAutomate/jna/jna-4.3.0.jar"/>
+	<classpathentry kind="lib" path="F:/workspace/ProjectDiscoveryAutomate/jna/jna-platform-4.3.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
